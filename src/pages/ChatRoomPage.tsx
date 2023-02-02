@@ -1,6 +1,6 @@
 import {useIsFocused} from '@react-navigation/native';
 import {doc, onSnapshot} from 'firebase/firestore';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Image,
   Pressable,
 } from 'react-native';
+import {MessageCard} from '../components/MessageCard';
 import {ChatRoom} from '../entities/chatRoom';
 import {getChatRoom, submitMessage} from '../firebase/chatRoom';
 import {db} from '../firebase/config';
@@ -50,24 +51,35 @@ export const ChatRoomPage = (props: Props) => {
     }
   }, [snapshot]);
 
+  const scrollViewRef = useRef() as any;
   return (
     <View>
-      <ScrollView style={styles.scrollView}>
-        {state && (
-          <View>
-            {state.messages.map((message, index) => {
-              return (
-                <View key={`${message}-${index}`}>
-                  <Text style={styles.messageText}>{message.messageText}</Text>
-                </View>
-              );
-            })}
-          </View>
-        )}
-      </ScrollView>
+      <View style={styles.messageView}>
+        <ScrollView
+          style={styles.scrollView}
+          ref={scrollViewRef}
+          onContentSizeChange={() => scrollViewRef.current.scrollToEnd()}>
+          {state && (
+            <View>
+              {state.messages.map((message, index) => {
+                return (
+                  <MessageCard
+                    key={`${message}-${index}`}
+                    text={message.messageText}
+                    avatar={message.senderAvatar}
+                    date={message.messageDate}
+                    name={message.senderName}
+                  />
+                );
+              })}
+            </View>
+          )}
+        </ScrollView>
+      </View>
       <View style={styles.row}>
         <TextInput
           placeholder="Add message..."
+          placeholderTextColor={'black'}
           style={inputText ? styles.textInputFilled : styles.textInputEmpty}
           value={inputText}
           onChangeText={setInputText}
@@ -98,6 +110,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 10,
     borderRadius: 5,
+    color: 'black',
   },
   textInputEmpty: {
     width: '90%',
@@ -107,10 +120,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 10,
     borderRadius: 5,
+    color: 'black',
   },
-  scrollView: {
+  messageView: {
+    justifyContent: 'flex-end',
     height: '80%',
   },
+  scrollView: {},
   row: {
     flexDirection: 'row',
     alignItems: 'center',

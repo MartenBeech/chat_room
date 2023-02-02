@@ -1,6 +1,7 @@
 import {doc, getDoc, collection, setDoc, getDocs} from 'firebase/firestore';
 import {ChatRoom} from '../entities/chatRoom';
 import {Message} from '../entities/message';
+import {avatar, fullName} from './auth';
 import {db} from './config';
 
 export async function getChatRoom(id: number) {
@@ -38,8 +39,8 @@ export async function submitMessage(props: SubmitMessage) {
     messages.push({
       messageText: props.text,
       messageDate: currentDate,
-      senderName: 'User',
-      senderAvatar: '',
+      senderName: fullName,
+      senderAvatar: avatar,
     });
     await setDoc(doc(db, 'ChatRooms', props.chatRoomId.toString()), {
       ...chatRoom,

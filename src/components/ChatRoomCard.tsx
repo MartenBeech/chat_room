@@ -40,11 +40,13 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: 'bold',
     marginHorizontal: 10,
+    color: 'black',
   },
   descriptionFont: {
     fontSize: 20,
     marginHorizontal: 10,
     marginBottom: 10,
+    color: 'black',
   },
   topMargin: {
     marginTop: 20,
