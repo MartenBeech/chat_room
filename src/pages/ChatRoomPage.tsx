@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import {MessageCard} from '../components/MessageCard';
 import {ChatRoom} from '../entities/chatRoom';
+import {Message} from '../entities/message';
 import {getChatRoom, submitMessage} from '../firebase/chatRoom';
 import {db} from '../firebase/config';
 
@@ -20,15 +21,20 @@ interface Props {
   route: any;
 }
 
+let nMessagesShown = 0;
+
 export const ChatRoomPage = (props: Props) => {
   const [state, setState] = useState<ChatRoom>();
   const [inputText, setInputText] = useState<string>('');
   const [snapshot, setSnapshot] = useState<ChatRoom>();
+  const [messagesShown, setMessagesShown] = useState<Message[]>([]);
 
   const isFocused = useIsFocused();
   const chatRoomId = props.route.params.name as number;
   useEffect(() => {
     if (isFocused) {
+      nMessagesShown = 50;
+      scrollViewRef.current.scrollToEnd();
       getChatRoom(chatRoomId).then(response => {
         setState(response);
       });
@@ -46,36 +52,64 @@ export const ChatRoomPage = (props: Props) => {
   useEffect(() => {
     if (snapshot) {
       if (state) {
-        setState({...state, messages: snapshot.messages});
+        filterMessages(snapshot.messages);
       }
+      setState(snapshot);
     }
   }, [snapshot]);
+
+  const filterMessages = (messages: Message[]) => {
+    if (state) {
+      if (messagesShown.length < messages.length) {
+        const newMessages = [...messages];
+        setMessagesShown(
+          newMessages.splice(
+            newMessages.length - nMessagesShown,
+            state.messages.length,
+          ),
+        );
+      }
+    }
+  };
 
   const scrollViewRef = useRef() as any;
   return (
     <View>
-      <View style={styles.messageView}>
-        <ScrollView
-          style={styles.scrollView}
-          ref={scrollViewRef}
-          onContentSizeChange={() => scrollViewRef.current.scrollToEnd()}>
-          {state && (
-            <View>
-              {state.messages.map((message, index) => {
-                return (
-                  <MessageCard
-                    key={`${message}-${index}`}
-                    text={message.messageText}
-                    avatar={message.senderAvatar}
-                    date={message.messageDate}
-                    name={message.senderName}
-                  />
-                );
-              })}
-            </View>
-          )}
-        </ScrollView>
-      </View>
+      <ScrollView
+        style={styles.scrollView}
+        ref={scrollViewRef}
+        onContentSizeChange={() => {
+          if (nMessagesShown === 50) {
+            scrollViewRef.current.scrollToEnd();
+          }
+        }}
+        onScroll={event => {
+          if (event.nativeEvent.contentOffset.y == 0) {
+            if (state) {
+              nMessagesShown += 50;
+              if (nMessagesShown > state.messages.length) {
+                nMessagesShown = state.messages.length;
+              }
+              filterMessages(state.messages);
+            }
+          }
+        }}>
+        {state && (
+          <View>
+            {messagesShown.map((message, index) => {
+              return (
+                <MessageCard
+                  key={`${message}-${index}`}
+                  text={message.messageText}
+                  avatar={message.senderAvatar}
+                  date={message.messageDate}
+                  name={message.senderName}
+                />
+              );
+            })}
+          </View>
+        )}
+      </ScrollView>
       <View style={styles.row}>
         <TextInput
           placeholder="Add message..."
@@ -88,6 +122,7 @@ export const ChatRoomPage = (props: Props) => {
           <Pressable
             onPress={async () => {
               setInputText('');
+              scrollViewRef.current.scrollToEnd();
               await submitMessage({chatRoomId, text: inputText});
             }}>
             <Image
@@ -122,11 +157,8 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     color: 'black',
   },
-  messageView: {
-    justifyContent: 'flex-end',
-    height: '80%',
-  },
-  scrollView: {},
+
+  scrollView: {height: '80%'},
   row: {
     flexDirection: 'row',
     alignItems: 'center',
