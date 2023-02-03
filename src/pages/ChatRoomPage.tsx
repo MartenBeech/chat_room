@@ -84,7 +84,7 @@ export const ChatRoomPage = (props: Props) => {
           }
         }}
         onScroll={event => {
-          if (event.nativeEvent.contentOffset.y == 0) {
+          if (event.nativeEvent.contentOffset.y === 0) {
             if (state) {
               nMessagesShown += 50;
               if (nMessagesShown > state.messages.length) {
