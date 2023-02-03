@@ -65,7 +65,7 @@ export const ChatRoomPage = (props: Props) => {
         setMessagesShown(
           newMessages.splice(
             newMessages.length - nMessagesShown,
-            state.messages.length,
+            state.messages.length + 1,
           ),
         );
       }
