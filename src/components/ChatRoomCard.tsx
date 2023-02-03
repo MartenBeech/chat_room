@@ -11,7 +11,7 @@ export const ChatRoomCard = (props: Props) => {
   return (
     <Pressable style={styles.card} onPress={props.onPress}>
       <View style={styles.row}>
-        <View>
+        <View style={styles.texts}>
           <View>
             <Text style={styles.titleFont}>{props.title}</Text>
           </View>
@@ -60,5 +60,8 @@ const styles = StyleSheet.create({
     height: 30,
     width: 30,
     resizeMode: 'contain',
+  },
+  texts: {
+    width: '90%',
   },
 });
