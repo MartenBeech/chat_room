@@ -57,8 +57,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   chevronIcon: {
-    height: 40,
-    width: 40,
+    height: 30,
+    width: 30,
     resizeMode: 'contain',
   },
 });
