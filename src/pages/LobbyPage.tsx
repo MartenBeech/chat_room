@@ -12,6 +12,11 @@ export const LobbyPage = ({navigation}) => {
   useEffect(() => {
     if (isFocused) {
       getChatRooms().then(response => {
+        response.sort((a, b) => {
+          const dateA = new Date(a.lastModified);
+          const dateB = new Date(b.lastModified);
+          return dateA < dateB ? 1 : -1;
+        });
         setChatRooms(response);
       });
     }
