@@ -15,7 +15,11 @@ import {ChatRoom} from '../entities/chatRoom';
 import {Message} from '../entities/message';
 import {getChatRoom, submitMessage} from '../firebase/chatRoom';
 import {db} from '../firebase/config';
-import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import {
+  ImagePickerResponse,
+  launchCamera,
+  launchImageLibrary,
+} from 'react-native-image-picker';
 import {uploadImage} from '../firebase/storage';
 
 interface Props {
@@ -74,6 +78,29 @@ export const ChatRoomPage = (props: Props) => {
     }
   };
 
+  const sendImage = async (result: ImagePickerResponse) => {
+    if (result && result.assets) {
+      const data = result.assets[0];
+      if (data.uri) {
+        const response = await fetch(data.uri);
+        const blob = await response.blob();
+        const image = new File([blob], `${data.uri}`, {
+          type: blob.type,
+        }) as any;
+        await uploadImage({
+          roomId: chatRoomId,
+          image: image,
+          name: image.data.blobId,
+        });
+        await submitMessage({
+          chatRoomId,
+          text: image.data.blobId,
+          isImage: true,
+        });
+      }
+    }
+  };
+
   const scrollViewRef = useRef() as any;
   return (
     <View>
@@ -111,35 +138,6 @@ export const ChatRoomPage = (props: Props) => {
         )}
       </ScrollView>
       <View style={styles.row}>
-        <Pressable
-          onPress={async () => {
-            const result = await launchImageLibrary({mediaType: 'photo'});
-            if (result && result.assets) {
-              const data = result.assets[0];
-              if (data.uri) {
-                const response = await fetch(data.uri);
-                const blob = await response.blob();
-                const image = new File([blob], `${data.uri}`, {
-                  type: blob.type,
-                }) as any;
-                await uploadImage({
-                  roomId: chatRoomId,
-                  image: image,
-                  name: image.data.blobId,
-                });
-                await submitMessage({
-                  chatRoomId,
-                  text: image.data.blobId,
-                  isImage: true,
-                });
-              }
-            }
-          }}>
-          <Image
-            style={styles.chevronIcon}
-            source={require('../images/Send.png')}
-          />
-        </Pressable>
         <TextInput
           placeholder="Add message..."
           placeholderTextColor={'black'}
@@ -159,11 +157,34 @@ export const ChatRoomPage = (props: Props) => {
               });
             }}>
             <Image
-              style={styles.chevronIcon}
-              source={require('../images/Send.png')}
+              style={styles.Icon}
+              source={require('../images/SendMessage.png')}
             />
           </Pressable>
-        ) : null}
+        ) : (
+          <View style={styles.row}>
+            <Pressable
+              onPress={async () => {
+                const result = await launchImageLibrary({mediaType: 'photo'});
+                await sendImage(result);
+              }}>
+              <Image
+                style={styles.Icon}
+                source={require('../images/UploadImage.png')}
+              />
+            </Pressable>
+            <Pressable
+              onPress={async () => {
+                const result = await launchCamera({mediaType: 'photo'});
+                await sendImage(result);
+              }}>
+              <Image
+                style={styles.Icon}
+                source={require('../images/TakePicture.png')}
+              />
+            </Pressable>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -171,7 +192,7 @@ export const ChatRoomPage = (props: Props) => {
 
 const styles = StyleSheet.create({
   textInputFilled: {
-    width: '80%',
+    width: '75%',
     height: 40,
     marginVertical: 12,
     marginHorizontal: '4%',
@@ -181,7 +202,7 @@ const styles = StyleSheet.create({
     color: 'black',
   },
   textInputEmpty: {
-    width: '90%',
+    width: '65%',
     height: 40,
     marginVertical: 12,
     marginHorizontal: '4%',
@@ -190,13 +211,12 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     color: 'black',
   },
-
   scrollView: {height: '80%'},
   row: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  chevronIcon: {
+  Icon: {
     height: 40,
     width: 40,
     resizeMode: 'contain',
