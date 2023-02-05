@@ -15,6 +15,8 @@ import {ChatRoom} from '../entities/chatRoom';
 import {Message} from '../entities/message';
 import {getChatRoom, submitMessage} from '../firebase/chatRoom';
 import {db} from '../firebase/config';
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import {uploadImage} from '../firebase/storage';
 
 interface Props {
   navigation: any;
@@ -100,10 +102,8 @@ export const ChatRoomPage = (props: Props) => {
               return (
                 <MessageCard
                   key={`${message}-${index}`}
-                  text={message.messageText}
-                  avatar={message.senderAvatar}
-                  date={message.messageDate}
-                  name={message.senderName}
+                  message={message}
+                  roomId={chatRoomId}
                 />
               );
             })}
@@ -111,6 +111,35 @@ export const ChatRoomPage = (props: Props) => {
         )}
       </ScrollView>
       <View style={styles.row}>
+        <Pressable
+          onPress={async () => {
+            const result = await launchImageLibrary({mediaType: 'photo'});
+            if (result && result.assets) {
+              const data = result.assets[0];
+              if (data.uri) {
+                const response = await fetch(data.uri);
+                const blob = await response.blob();
+                const image = new File([blob], `${data.uri}`, {
+                  type: blob.type,
+                }) as any;
+                await uploadImage({
+                  roomId: chatRoomId,
+                  image: image,
+                  name: image.data.blobId,
+                });
+                await submitMessage({
+                  chatRoomId,
+                  text: image.data.blobId,
+                  isImage: true,
+                });
+              }
+            }
+          }}>
+          <Image
+            style={styles.chevronIcon}
+            source={require('../images/Send.png')}
+          />
+        </Pressable>
         <TextInput
           placeholder="Add message..."
           placeholderTextColor={'black'}
@@ -123,7 +152,11 @@ export const ChatRoomPage = (props: Props) => {
             onPress={async () => {
               setInputText('');
               scrollViewRef.current.scrollToEnd();
-              await submitMessage({chatRoomId, text: inputText});
+              await submitMessage({
+                chatRoomId,
+                text: inputText,
+                isImage: false,
+              });
             }}>
             <Image
               style={styles.chevronIcon}

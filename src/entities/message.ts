@@ -3,4 +3,5 @@ export interface Message {
   senderName: string;
   messageDate: string;
   messageText: string;
+  isImage: boolean;
 }
