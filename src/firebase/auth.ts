@@ -1,5 +1,8 @@
 import auth from '@react-native-firebase/auth';
-import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import {
+  GoogleSignin,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 
 GoogleSignin.configure({
   webClientId:
@@ -25,7 +28,15 @@ export async function onGoogleButtonPress() {
     const googleCredential = auth.GoogleAuthProvider.credential(idToken);
     return auth().signInWithCredential(googleCredential);
   } catch (error) {
-    alert(error);
+    if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+      alert('Sign-in was cancelled');
+    } else if (error.code === statusCodes.IN_PROGRESS) {
+      alert('Sign-in is in progress');
+    } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+      alert('Play services are not available');
+    } else {
+      alert(error.message);
+    }
     return;
   }
 }
