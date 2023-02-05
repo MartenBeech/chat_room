@@ -27,5 +27,6 @@ interface GetImage {
 export async function getImage(props: GetImage) {
   const storage = getStorage();
   const storageRef = ref(storage, `${props.roomId.toString()}/${props.name}`);
-  return await getDownloadURL(storageRef);
+  const url = await getDownloadURL(storageRef);
+  return url;
 }
